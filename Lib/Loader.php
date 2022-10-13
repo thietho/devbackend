@@ -108,14 +108,21 @@ class Loader
     public function getOptionSetValue($key,$optionsetid,$attributeid = 0){
         global $glString;
         $model = new Entity('Core','OptionSet');
-        if($optionsetid != 0){
-            $optionset = $model->getItem($optionsetid);
-            $optionsetdata = json_decode($glString->formateJson($optionset['optionsetvalue']),true);
-        }else{
+        if($attributeid){
             $this->loadModel('Core','EntityAttribute');
             $attributeModel = new EntityAttributeModel();
             $attribute = $attributeModel->getItem($attributeid);
             $optionsetdata = json_decode($glString->formateJson($attribute['optionsetvalue']),true);
+        }else{
+            if(is_int($optionsetid)){
+                $optionset = $model->getItem($optionsetid);
+                $optionsetdata = json_decode($glString->formateJson($optionset['optionsetvalue']),true);
+            }else{
+                $where = " AND ".$model->genCondition('optionsetname','equal',$optionsetid);
+                $optionsets = $model->getList($where);
+                $optionset = $optionsets[0];
+                $optionsetdata = json_decode($glString->formateJson($optionset['optionsetvalue']),true);
+            }
         }
         $key = str_replace('[','',$key);
         $key = str_replace(']','',$key);
