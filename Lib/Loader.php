@@ -105,7 +105,7 @@ class Loader
         $modelEntity = new EntityModel();
         return $modelEntity->getRelatedValue($valueid,$entityrelated);
     }
-    public function getOptionSetValue($key,$optionsetid,$attributeid = 0){
+    public function getOptionSetData($optionsetid,$attributeid = 0){
         global $glString;
         $model = new Entity('Core','OptionSet');
         if($attributeid){
@@ -124,6 +124,10 @@ class Loader
                 $optionsetdata = json_decode($glString->formateJson($optionset['optionsetvalue']),true);
             }
         }
+        return $optionsetdata;
+    }
+    public function getOptionSetValue($key,$optionsetid,$attributeid = 0){
+        $optionsetdata = $this->getOptionSetData($optionsetid,$attributeid);
         $key = str_replace('[','',$key);
         $key = str_replace(']','',$key);
         $arr = explode(',',$key);
