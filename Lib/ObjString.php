@@ -30,15 +30,28 @@ final class ObjString
         return implode(',',$arr);
     }
     public function stringToArray($str){
+        $str = str_replace('][',',',$str);
         $str = str_replace('[','',$str);
         $str = str_replace(']','',$str);
-        return explode(',',$str);
+        $str = str_replace('"','',$str);
+        if(empty(trim($str))){
+            return array();
+        }else{
+            return explode(',',$str);
+        }
+
     }
     public function numberFormate($num,$n=0)
     {
         $dec_point = '.';
         $thousands_sep = ',';
-        return number_format($num, $n, $dec_point, $thousands_sep);
+        if($n == 0){
+            $str = $num.'';
+            $arr = explode('.',$str);
+            $t = isset($arr[1])?$arr[1]:0;
+            return number_format(floatval($arr[0]), $n, $dec_point, $thousands_sep).($t>0?$dec_point.$t:'');
+        }
+        return number_format(floatval($num), $n, $dec_point, $thousands_sep);
     }
 
     public function toNumber($str)
@@ -285,15 +298,12 @@ final class ObjString
             'O'=>'Ó|Ò|Ỏ|Õ|Ọ|Ô|Ố|Ồ|Ổ|Ỗ|Ộ|Ơ|Ớ|Ờ|Ở|Ỡ|Ợ',
             'U'=>'Ú|Ù|Ủ|Ũ|Ụ|Ư|Ứ|Ừ|Ử|Ữ|Ự',
             'Y'=>'Ý|Ỳ|Ỷ|Ỹ|Ỵ',
-
         );
         foreach($unicode as $nonUnicode=>$uni){
             $str = preg_replace("/($uni)/i", $nonUnicode, $str);
         }
         $str = str_replace(' ','_',$str);
-
         return $str;
-
     }
 }
 ?>

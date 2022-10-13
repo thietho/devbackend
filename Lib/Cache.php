@@ -47,7 +47,7 @@ class Cache
     {
         if (!is_dir($this->dir)) {
             mkdir($this->dir);
-            chmod($this->dir, 0777);
+            chmod($this->dir, 0755);
         }
         return file_put_contents($this->dir . $filename, $content);
     }

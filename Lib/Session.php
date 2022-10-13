@@ -5,7 +5,7 @@ class Session
     private $data = array();
     public function __construct()
     {
-        $this->data = $_SESSION;
+        $this->data = isset($_SESSION)?$_SESSION:[];
     }
     public function get($key){
         if(isset($this->data[$key])){

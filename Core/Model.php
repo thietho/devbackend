@@ -50,23 +50,23 @@ class Model
     );
 
     public $corecol = array(
-        'assignees' => array('Label' => 'Assignees', 'datatype' => 'relatedto', 'entityrelated' => '1'),
-        'assignat' => array('Label' => 'Assign At', 'datatype' => 'DATETIME'),
-        'createdby' => array('Label' => 'Created By', 'datatype' => 'relatedto', 'entityrelated' => '1'),
-        'createdat' => array('Label' => 'Created At', 'datatype' => 'DATETIME'),
-        'updatedby' => array('Label' => 'Updated By', 'datatype' => 'relatedto', 'entityrelated' => '1'),
-        'updatedat' => array('Label' => 'Updated At', 'datatype' => 'DATETIME'),
-        'deletedby' => array('Label' => 'Deleted By', 'datatype' => 'relatedto', 'entityrelated' => '1'),
-        'deletedat' => array('Label' => 'Deleted At', 'datatype' => 'DATETIME'),
+        'assignees' => array('Label' => 'Người chỉ định', 'datatype' => 'relatedto', 'entityrelated' => '1'),
+        'assignat' => array('Label' => 'Chỉ định lúc', 'datatype' => 'DATETIME'),
+        'createdby' => array('Label' => 'Tạo bởi', 'datatype' => 'relatedto', 'entityrelated' => '1'),
+        'createdat' => array('Label' => 'Tạo lúc', 'datatype' => 'DATETIME'),
+        'updatedby' => array('Label' => 'Cập nhật bởi', 'datatype' => 'relatedto', 'entityrelated' => '1'),
+        'updatedat' => array('Label' => 'Cập nhật lúc', 'datatype' => 'DATETIME'),
+        'deletedby' => array('Label' => 'Xóa bởi', 'datatype' => 'relatedto', 'entityrelated' => '1'),
+        'deletedat' => array('Label' => 'Xóa lúc', 'datatype' => 'DATETIME'),
 
     );
     public $coreAttributes = array(
-        array('id' => 'assignees', 'attributename' => 'assignees', 'attributelabel' => 'Assignees', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
-        array('id' => 'assignat', 'attributename' => 'assignat', 'attributelabel' => 'Assign At', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
-        array('id' => 'createdby', 'attributename' => 'createdby', 'attributelabel' => 'Created By', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
-        array('id' => 'createdat', 'attributename' => 'createdat', 'attributelabel' => 'Created At', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
-        array('id' => 'updatedby', 'attributename' => 'updatedby', 'attributelabel' => 'Updated By', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
-        array('id' => 'updatedat', 'attributename' => 'updatedat', 'attributelabel' => 'Updated At', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
+        array('id' => 'assignees', 'attributename' => 'assignees', 'attributelabel' => 'Người chỉ định', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
+        array('id' => 'assignat', 'attributename' => 'assignat', 'attributelabel' => 'Chỉ định lúc', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
+        array('id' => 'createdby', 'attributename' => 'createdby', 'attributelabel' => 'Tạo bởi', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
+        array('id' => 'createdat', 'attributename' => 'createdat', 'attributelabel' => 'Tạo lúc', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
+        array('id' => 'updatedby', 'attributename' => 'updatedby', 'attributelabel' => 'Cập nhật bởi', 'datatype' => 'relatedto', 'entityrelated' => '1', 'datalength' => 0),
+        array('id' => 'updatedat', 'attributename' => 'updatedat', 'attributelabel' => 'Cập nhật lúc', 'datatype' => 'DATETIME', 'entityrelated' => '0', 'datalength' => 0),
     );
 
     public function __construct()
@@ -99,25 +99,12 @@ class Model
         }
         $sql = "Select `" . $tablename . "`.*
 									from `" . $tablename . "`
-									where id ='" . $id . "' ";
+									where id ='" . $id . "' AND `deletedby`= 0";
         $query = $this->db->query($sql);
         return $query->row;
     }
 
-    public function getEntity($id)
-    {
-        $id = $this->db->escape($id);
-        $sql = "Select `core_entity`.*
-									from `core_entity`
-									where id ='" . $id . "' ";
-        $query = $this->db->query($sql);
-        $entity = $query->row;
-        if ($entity['structure'] == '') {
-            $entity['structure'] = 'list';
-        }
-        $entity['attributes'] = $this->getAttributes($id);
-        return $entity;
-    }
+
 
     public function getEntitys($where = "", $from = 0, $to = 0)
     {
@@ -136,7 +123,7 @@ class Model
         $entityid = $this->db->escape($entityid);
         $sql = "Select *
                 from `core_entity_attribute`
-				where entityid = $entityid ORDER BY `position`";
+				where entityid = $entityid AND `deletedby`= 0 ORDER BY `position`";
         $query = $this->db->query($sql);
         return $query->rows;
     }
@@ -156,7 +143,32 @@ class Model
         }
         return $data;
     }
+    public function getEntity($id)
+    {
+        $id = $this->db->escape($id);
+        $sql = "Select `core_entity`.*
+									from `core_entity`
+									where id ='" . $id . "' AND `deletedby`= 0";
+        $query = $this->db->query($sql);
+        $entity = $query->row;
+        if(empty($entity)){
+            return array();
+        }else{
+            if ($entity['structure'] == '') {
+                $entity['structure'] = 'list';
+            }
+            $entity['attributes'] = $this->getAttributes($id);
+            if(!empty($entity['attributes'])){
+                $mainattribute = $this->string->array_Filter( $entity['attributes'],'id',$entity['maincol']);
+                $entity['mainattribute'] = !empty($mainattribute)?$mainattribute[0]:array();
+            }else{
+                $entity['mainattribute'] = array();
+            }
+            $entity['coreattributes'] = $this->coreAttributes;
+            return $entity;
+        }
 
+    }
     public function getEntityByClassType($classname, $type)
     {
         $classname = $this->db->escape($classname);
@@ -167,6 +179,8 @@ class Model
             return array();
         $entity = $entitys[0];
         $entity['attributes'] = $this->getAttributes($entity['id']);
+        $mainattribute = $this->string->array_Filter( $entity['attributes'],'id',$entity['maincol']);
+        $entity['mainattribute'] = $mainattribute[0];
         $entity['coreattributes'] = $this->coreAttributes;
         return $entity;
     }
@@ -180,20 +194,8 @@ class Model
             return array();
         $entity = $entitys[0];
         $entity['attributes'] = $this->getAttributes($entity['id']);
-        $entity['coreattributes'] = $this->coreAttributes;
-        return $entity;
-    }
-
-    public function getEntityByRoute($path, $classname)
-    {
-        $path = $this->db->escape($path);
-        $classname = $this->db->escape($classname);
-        $where = " AND entitytype ='$path' AND classname = '$classname'";
-        $entitys = $this->getEntitys($where);
-        if (empty($entitys))
-            return array();
-        $entity = $entitys[0];
-        $entity['attributes'] = $this->getAttributes($entity['id']);
+        $mainattribute = $this->string->array_Filter( $entity['attributes'],'id',$entity['maincol']);
+        $entity['mainattribute'] = !empty($mainattribute)?$mainattribute[0]:array();
         $entity['coreattributes'] = $this->coreAttributes;
         return $entity;
     }
@@ -207,6 +209,8 @@ class Model
             return array();
         $entity = $entitys[0];
         $entity['attributes'] = $this->getAttributes($entity['id']);
+        $mainattribute = $this->string->array_Filter( $entity['attributes'],'id',$entity['maincol']);
+        $entity['mainattribute'] = !empty($mainattribute)?$mainattribute[0]:array();
         $entity['coreattributes'] = $this->coreAttributes;
         return $entity;
     }
@@ -214,7 +218,7 @@ class Model
     public function getAttributesByEntity($entityid)
     {
         $entityid = $this->db->escape($entityid);
-        $sql = "SELECT * FROM `core_entity_attribute` WHERE `entityid` = " . $entityid;
+        $sql = "SELECT * FROM `core_entity_attribute` WHERE `deletedby`= 0 AND `entityid` = " . $entityid;
         $query = $this->db->query($sql);
         return $query->rows;
     }
@@ -230,7 +234,7 @@ class Model
         if ($entityid) {
             $sql = "Select `core_entity_attribute`.*
 									from `core_entity_attribute`
-									where attributename ='$attributename' AND entityid = " . $entityid;
+									where `deletedby`= 0 AND attributename ='$attributename' AND entityid = " . $entityid;
             $query = $this->db->query($sql);
             return $query->row;
         } else {
@@ -243,7 +247,7 @@ class Model
         $attributeid = $this->db->escape($attributeid);
         $query = $this->db->query("Select `core_entity_attribute`.*
 									from `core_entity_attribute`
-									where id ='$attributeid' ");
+									where id ='$attributeid' AND `deletedby`= 0");
         return $query->row;
     }
 
@@ -253,7 +257,7 @@ class Model
         $name = $this->db->escape($name);
         $query = $this->db->query("Select `" . $this->tablename . "`.*
 									from `" . $this->tablename . "`
-									where id ='" . $id . "' ");
+									where `deletedby`= 0 AND id ='" . $id . "' ");
         return $query->row[$name];
     }
 
@@ -263,12 +267,26 @@ class Model
      * @param int $to
      * @return mixed
      */
-    public function countTotal($where)
+    public function countTotal($where,$template = array())
     {
+        $strCondition = '';
+        if(!empty($template)){
+            if (!empty($template['condition'])) {
+                $strCondition .= "AND ";
+                $dataCondition = $template['condition'];
+                foreach ($dataCondition as $expresstion) {
+                    $arr = explode('|', $expresstion);
+                    if (count($arr) == 3) {
+                        $strCondition .= $this->genCondition($arr[0], $arr[1], $arr[2]);
+                    } else {
+                        $strCondition .= ' ' . $expresstion . ' ';
+                    }
+                }
+            }
+        }
         $sql = "Select count(*) as total
                 from `" . $this->tablename . "`
-				where `deletedby`= '' " . $where;
-
+				where `deletedby`= '0' ".$strCondition." " . $where;
         $query = $this->db->query($sql);
         return $query->row['total'];
     }
@@ -310,7 +328,7 @@ class Model
                 break;
             case 'between':
                 $arr = $this->string->stringToArray($val);
-                $condition = "$col BETWEEN '".$arr[0]."' AND '".$arr[1]."'";
+                $condition = "$col BETWEEN '".$arr[0]."' AND '".$arr[1]." 23:59:59'";
                 break;
             case 'notbetween':
                 $arr = $this->string->stringToArray($val);
@@ -337,41 +355,46 @@ class Model
         }
         return $condition;
     }
-
-    public function getList($where = "", $from = 0, $to = 0, $template = array())
-    {
-        $listuserid = array();
-        $allow = 'all';
-        $whereassignees = "";
-        if (!empty($this->auth->userInfor) && !empty($this->entity) && $this->auth->userInfor['group'] != 1) {
-            $listroleid = [];
-            $allow = $this->auth->userInfor['allow'];
-            if ($this->auth->userInfor['allow'] == 'minechild') {
-                foreach ($this->auth->userInfor['roleidchild'] as $roleid) {
-                    $listroleid[] = $roleid;
+    public function genConditionByRole(){
+        if(!isset($this->entity['ismaterdata']) || $this->entity['ismaterdata'] == 0){
+            $listuserid = array();
+            $whereassignees = "";
+            if (!empty($this->auth->userInfor)
+                && !empty($this->entity)
+                &&$this->entity['entitytype'] != 'Core'
+                && $this->auth->userInfor['group'] != 1) {
+                $allow = $this->auth->userInfor['allow'];
+                switch ($allow){
+                    case 'minechild':
+                        $listuserid []= $this->auth->userInfor['id'];
+                        $userStructureModel = new \Lib\Entity('Core','UserStructure');
+                        $w = " AND userid = ".$this->auth->userInfor['id'];
+                        $userStructures = $userStructureModel->getList($w);
+                        if(!empty($userStructures)){
+                            $id = $userStructures[0]['id'];
+                            $userStructures = array();
+                            $userStructureModel->travel($id,$userStructures);
+                            foreach ($userStructures as $userStructure){
+                                $listuserid []= $userStructure['userid'];
+                            }
+                        }
+                        $whereassignees = " AND (". $this->entity['tablename'].".createdby in (".implode(',',$listuserid).") OR ". $this->entity['tablename'].".`assignees` IN (".implode(',',$listuserid)."))";
+                        break;
+                    case 'onlyme':
+                        $whereassignees = " AND (". $this->entity['tablename'].".createdby = ".$this->auth->userInfor['id']." OR ". $this->entity['tablename'].".`assignees` = ".$this->auth->userInfor['id'].")";
+                        break;
                 }
+                //echo $whereassignees;
+
             }
-            if ($this->auth->userInfor['allow'] != 'all') {
-                $listuserid []= $this->auth->userInfor['id'];
-                if(!empty($listroleid)){
-                    $sql = "SELECT * FROM `core_user` WHERE `roleid` in (" . implode(',', $listroleid) . ");";
-                    $query = $this->db->query($sql);
-                    $users = $query->rows;
-
-                    foreach ($users as $user) {
-                        $listuserid [] = $user['id'];
-                    }
-                }
-
-
-                if($allow!='all'){
-                    $whereassignees = " AND ". $this->entity['tablename'].".createdby in (".implode(',',$listuserid).") OR ". $this->entity['tablename'].".`assignees` IN (".implode(',',$listuserid).")";
-                }
-            }
-
+            return $whereassignees;
+        }else{
+            return '';
         }
 
-
+    }
+    public function getList($where = "", $from = 0, $to = 0, $template = array())
+    {
         $whereuser = '';
         if (!empty($this->entity)) {
             if ($this->entity['classname'] == 'User' && $this->auth->userInfor['group'] != 1) {
@@ -390,8 +413,10 @@ class Model
             $cols = $template;
             $arr_colname = array();
             $arr_join = array();
+            $arr_table_alias = [];
             $i = 0;
-            foreach ($cols['cols'] as $col) {
+            foreach ($cols['cols'] as $key => $col) {
+
                 $attribute = $this->getAttributeById($col['attributeid']);
                 if (empty($attribute)) {
                     $attribute = $col;
@@ -401,15 +426,23 @@ class Model
                 $entity = $this->getEntity($attribute['entityid']);
 
                 if ($attribute['datatype'] == 'relatedto') {
-                    $entityrelated = $this->getEntity($attribute['entityrelated']);
-                    if (!isset($attribute['attributeid'])) {
-                        $join = 'LEFT JOIN ' . $entityrelated['tablename'] . ' ON ' . $this->entity['tablename'] . '.' . $attribute['attributename'] . ' = ' . $entityrelated['tablename'] . '.id';
-                    } else {
-                        $join = 'LEFT JOIN ' . $entityrelated['tablename'] . ' ON ' . $attribute['attributename'] . ' = ' . $entityrelated['tablename'] . '.id';
-                    }
+                    if($attribute['entityrelated'] != $this->entity['id']){
+                        $entityrelated = $this->getEntity($attribute['entityrelated']);
+                        if (!isset($attribute['attributeid'])) {
+                            if(isset($this->arr_col[$attribute['attributename']])){
+                                $join = 'LEFT JOIN ' . $entityrelated['tablename'] . ' as T_'.$key.' ON ' . $this->entity['tablename'] . '.' . $attribute['attributename'] . ' = T_'.$key . '.id';
+                                $arr_table_alias[$entityrelated['tablename']] = 'T_'.$key;
+                                $arr_join[] = $join;
+                            }
+                        } else {
+                            $join = 'LEFT JOIN ' . $entityrelated['tablename'] .' as T_'.$key. ' ON ' . $attribute['attributename'] . ' = T_'.$key . '.id';
+                            $arr_table_alias[$entityrelated['tablename']] = 'T_'.$key;
+                            $arr_join[] = $join;
+                        }
 
-                    $arr_join[] = $join;
-                    $i++;
+
+                        $i++;
+                    }
                 }
 
                 if (isset($attribute['attributeid'])) {
@@ -418,6 +451,11 @@ class Model
                     $arr_colname[] = $entity['tablename'] . '.' . $attribute['attributename'];
                 }
 
+                foreach ($arr_table_alias as $key => $val){
+                    foreach ($arr_colname as &$colname){
+                        $colname = str_replace($key.'.',$val.'.',$colname);
+                    }
+                }
             }
             $strCondition = '';
             if (!empty($template['condition'])) {
@@ -435,7 +473,7 @@ class Model
 
             $sql = "Select " . $this->entity['tablename'] . ".id," . implode(',', $arr_colname) . "
                 from `" . $this->tablename . "` " . implode(' ', $arr_join) . "
-				where " . $this->entity['tablename'] . ".`deletedby`= 0 $whereassignees $whereuser " . $strCondition;
+				where " . $this->entity['tablename'] . ".`deletedby`= 0 $whereuser " . $strCondition;
         }
         $sql .= $where;
         if ($to > 0) {
@@ -527,6 +565,10 @@ class Model
     private function dataParser($val, $type)
     {
         switch ($type) {
+            case 'VARCHAR':
+            case 'TEXT':
+                $val = $this->db->escape(strip_tags($val,'<br><strong>'));
+                break;
             case 'INT':
             case 'BIGINT':
             case 'FLOAT':
@@ -561,18 +603,20 @@ class Model
             if ($col != 'id') {
                 $col = str_replace('_value', '', $col);
                 if ($col == 'createdat') {
-                    if ($val == '') {
-                        $data[$col] = $this->date->getToday();
-                    } else {
-                        $data[$col] = $this->dataParser($val, 'DATETIME');
-                    }
+                    $data[$col] = $this->date->getToday();
+//                    if ($val == '') {
+//                        $data[$col] = $this->date->getToday();
+//                    } else {
+//                        $data[$col] = $this->dataParser($val, 'DATETIME');
+//                    }
                 }
                 if ($col == 'updatedat') {
-                    if ($val == '') {
-                        $data[$col] = $this->date->getToday();
-                    } else {
-                        $data[$col] = $this->dataParser($val, 'DATETIME');
-                    }
+                    $data[$col] = $this->date->getToday();
+//                    if ($val == '') {
+//                        $data[$col] = $this->date->getToday();
+//                    } else {
+//                        $data[$col] = $this->dataParser($val, 'DATETIME');
+//                    }
                 }
                 if ($col == 'assignat') {
                     if ($val == '') {
@@ -590,17 +634,17 @@ class Model
                     $path = FILESERVER . 'upload';
                     if (!is_dir($path)) {
                         mkdir($path);
-                        chmod($path, 0777);
+                        chmod($path, 0755);
                     }
                     $path .= '/' . $this->tablename;
                     if (!is_dir($path)) {
                         mkdir($path);
-                        chmod($path, 0777);
+                        chmod($path, 0755);
                     }
                     $path .= '/' . $data['id'];
                     if (!is_dir($path)) {
                         mkdir($path);
-                        chmod($path, 0777);
+                        chmod($path, 0755);
                     }
                     $path .= '/' . $_FILES[$col]['name'];
                     move_uploaded_file($_FILES[$col]['tmp_name'], $path);
@@ -628,7 +672,7 @@ class Model
 
             return $datachange;
         }
-        $data['createdby'] = $this->auth->userInfor['id'];
+        $data['createdby'] = isset($data['createdby'])?$data['createdby']:$this->auth->userInfor['id'];
         $data['createdat'] = $this->date->getToday();
 //        $data['assignees'] = $this->auth->userInfor['id'];
 //        $data['assignat'] = $this->date->getToday();
@@ -642,8 +686,20 @@ class Model
             $attribute = $this->getAttributeByName($key);
             if (!empty($attribute)) {
                 if ($attribute['isrequire']) {
-                    if ($val == '') {
-                        $errors[$key] = $attribute['attributelabel'] . ' is require!';
+                    switch ($attribute['datatype']){
+                        case 'INT':
+                        case 'BIGINT':
+                        case 'FLOAT':
+                        case 'DOUBLE':
+                        case 'relatedto':
+                        if (intval($val) == 0 && $this->entity['structure'] == 'list') {
+                            $errors[$key] = $attribute['attributelabel'] . ' là bắt buộc!';
+                        }
+                            break;
+                        default:
+                            if ($val == '') {
+                                $errors[$key] = $attribute['attributelabel'] . ' là bắt buộc!';
+                            }
                     }
                 }
                 if ($attribute['notduplicate']) {
@@ -651,19 +707,19 @@ class Model
                         $where = " AND $key = '$val'";
                         $list = $this->getList($where);
                         if (!empty($list)) {
-                            $errors[$key] = $attribute['attributelabel'] . ' is duplicate!';
+                            $errors[$key] = $attribute['attributelabel'] . ' bị trùng!';
                         }
                     } else {
                         $where = " AND $key = '$val' AND id <> " . $data['id'];
                         $list = $this->getList($where);
                         if (!empty($list)) {
-                            $errors[$key] = $attribute['attributelabel'] . ' is duplicate!';
+                            $errors[$key] = $attribute['attributelabel'] . ' bị trùng!';
                         }
                     }
                 }
                 if ($attribute['datalength'] > 0) {
                     if (strlen($val) > $attribute['datalength']) {
-                        $errors[$key] = $attribute['attributelabel'] . ' is length over max string length!';
+                        $errors[$key] = $attribute['attributelabel'] . ' chiều dài của chuổi vượt quá giới hạn!';
                     }
                 }
             }
@@ -676,7 +732,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'beforecreate');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -702,7 +758,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'created');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                 }
                 $process_update = array(
@@ -728,7 +784,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'beforeupdate');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -754,7 +810,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'updated');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -780,7 +836,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'beforesave');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -806,7 +862,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'saved');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -817,7 +873,7 @@ class Model
                     $processTraceModel = new Entity('Core', 'ProcessTrace');
                     $processTrace_insert = array(
                         'processid' => $process['id'],
-                        'method' => 'AfterSace',
+                        'method' => 'AfterSave',
                         'input' => json_encode($context),
                         'output' => json_encode($errors),
                     );
@@ -832,7 +888,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'beforedelete');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -858,7 +914,7 @@ class Model
         if (!empty($this->entity)) {
             $processs = $this->action->getProcessbyEntity($this->entity['id'], 'deleted');
             foreach ($processs as $process) {
-                if ($process['content'] != '' && $process['active']) {
+                if ($process['content'] != '' && $process['active'] == 'actived') {
                     eval("?> " . base64_decode($process['content']) . " <?php ");
                     $process_update = array(
                         'id' => $process['id'],
@@ -922,17 +978,33 @@ class Model
             }
         }
 
-        $errors = $this->validate($data);
         if (empty($data['id'])) {
             $this->beforeCreate($data, $errors);
         } else {
             $this->beforeUpdate($data, $errors);
         }
         $this->beforeSave($data, $errors);
+        $validatedata = $this->validate($data);
+        if(empty($errors)){
+            $errors = $validatedata;
+        }else{
+            if(!empty($validatedata)){
+                $errors = array_merge($errors,$validatedata);
+            }
+        }
+
+
+        //$errors = $this->validate($data);
+        if(isset($data['updatedat']) && $data['id']){
+            $itemold = $this->getItem($data['id']);
+            if($itemold['updatedat']!=$data['updatedat']){
+                $errors['updatedat'] = 'Dữ liệu đã bị thay đổi! Vui lòng tải lại trang trước khi lưu!';
+            }
+        }
         if (!empty($errors)) {
             return array(
                 'statuscode' => 0,
-                'text' => 'Save failed',
+                'text' => 'Lưu thất bại',
                 'data' => $errors
             );
         }
@@ -973,13 +1045,13 @@ class Model
         if ($data['id'] != 0) {
             return array(
                 'statuscode' => 1,
-                'text' => 'Save success',
+                'text' => 'Lưu thành công!',
                 'data' => $data
             );
         } else {
             return array(
                 'statuscode' => 0,
-                'text' => 'Save failed',
+                'text' => 'Lưu thất bại',
                 'data' => $data
             );
         }
@@ -990,16 +1062,20 @@ class Model
         if ($entityrelated) {
             $entity = $this->getEntity($entityrelated);
             $maincol = $entity['maincol'];
-            $sql = "SELECT * FROM `core_entity_attribute` WHERE id = " . $maincol . " AND entityid = " . $entity['id'];
+            $sql = "SELECT * FROM `core_entity_attribute` WHERE `deletedby`= 0 AND id = " . $maincol . " AND entityid = " . $entity['id'];
             $query = $this->db->query($sql);
             $attribute = $query->row;
             $maincolname = $attribute['attributename'];
             if ((int)$valueid) {
-                $sql = "SELECT `$maincolname` FROM `" . $entity['tablename'] . "` WHERE id = " . $valueid;
+                $sql = "SELECT `$maincolname` FROM `" . $entity['tablename'] . "` WHERE `deletedby`= 0 AND id = " . $valueid;
                 try {
                     $query = $this->db->query($sql);
                     if ($query->num_rows) {
-                        return '<a href="?route=' . $entity['entitytype'] . '/' . $entity['classname'] . '/View&id=' . $valueid . '" target="_blank">' . $query->row[$maincolname] . '</a>';
+                        if($this->auth->checkEntityPermission($entity['entitytype'],$entity['classname'],'View')) {
+                            return '<a href="?route=' . $entity['entitytype'] . '/' . $entity['classname'] . '/View&id=' . $valueid . '">' . $query->row[$maincolname] . '</a>';
+                        }else{
+                            return $query->row[$maincolname];
+                        }
                     } else {
                         return '';
                     }
@@ -1022,14 +1098,19 @@ class Model
                 }
 
                 if ($arr != null && !empty($arr) && !empty($arrMenuId)) {
-                    $sql = "SELECT `id`,`$maincolname` FROM `" . $entity['tablename'] . "` WHERE id in (" . implode(',', $arrMenuId) . ")";
+                    $sql = "SELECT `id`,`$maincolname` FROM `" . $entity['tablename'] . "` WHERE `deletedby`= 0 AND id in (" . implode(',', $arrMenuId) . ")";
                     $query = $this->db->query($sql);
                     if ($query->num_rows) {
                         $result = $query->rows;
                         $arr = array();
                         foreach ($result as $item) {
                             //$arr[] = $item[$maincolname];
-                            $arr[] = '<a href="?route=' . $entity['entitytype'] . '/' . $entity['classname'] . '/View&id=' . $item['id'] . '" target="_blank">' . $item[$maincolname] . '</a>';
+                            if($this->auth->checkEntityPermission($entity['entitytype'],$entity['classname'],'View')){
+                                $arr[] = '<a href="?route=' . $entity['entitytype'] . '/' . $entity['classname'] . '/View&id=' . $item['id'] . '" target="_blank">' . $item[$maincolname] . '</a>';
+                            }else{
+                                $arr[] = $item[$maincolname];
+                            }
+
                         }
                         return implode(', ', $arr);
                     } else {
@@ -1078,7 +1159,7 @@ class Model
                 $data = $this->getRelateData($id, $entityRelated);
                 $entityRelated['data'] = $data;
                 if (!empty($data)) {
-                    $errors[] = "Have data related to " . $entityRelated['entityname'];
+                    $errors[] = "Có ràng buộc dữ liệu với " . $entityRelated['entityname'];
                 }
             }
         }
@@ -1095,7 +1176,7 @@ class Model
                 if (!empty($childs)) {
                     return json_encode(array(
                         'statuscode' => 0,
-                        'text' => 'Deleted data is error! You must clear all childs',
+                        'text' => 'Không thể xóa dữ liệu! Bạn phải xóa tất cả các con trước!',
                     ));
                 }
             }
@@ -1112,7 +1193,7 @@ class Model
         $this->deleteComplete($id);
         return json_encode(array(
             'statuscode' => 1,
-            'text' => 'Deleted data success',
+            'text' => 'Xóa dữ liệu thành công',
         ));
     }
 
@@ -1121,7 +1202,7 @@ class Model
         $sql = "SELECT core_entity.entitytype,core_entity.tablename,core_entity.classname,core_entity.entityname, core_entity_attribute.* 
             FROM `core_entity_attribute` 
                 INNER JOIN core_entity ON core_entity.id = core_entity_attribute.entityid
-            WHERE `entityrelated` = $entityid AND core_entity_attribute.deletedby = 0";
+            WHERE `core_entity_attribute`.`deletedby`= 0 AND `entityrelated` = $entityid AND core_entity_attribute.deletedby = 0";
         $this->db->query($sql);
         $query = $this->db->query($sql);
         $data = $query->rows;
@@ -1165,7 +1246,19 @@ class Model
             }
         }
     }
+    public function getTreePath($rootid,$id){
+        $arr_path = array();
+        do{
+            $item = $this->getItem($id);
+            $arr_path []= $item;
 
+            $parentAttribute = $this->getAttributeById($this->entity['parentcol']);
+            $parentcol = $parentAttribute['attributename'];
+            $id = $item[$parentcol];
+        }
+        while ($id!=$rootid && $id !=0);
+        return $arr_path;
+    }
     public function getLogRecord($entityid, $recordid, $from = 0, $to = 0)
     {
         $sql = "Select *
@@ -1238,5 +1331,33 @@ class Model
         $this->db->deleteData('core_log', $where);
         $this->db->deleteData('core_process_trace', $where);
         $this->db->deleteData('core_logapi', $where);
+    }
+    public function getViewDefault($entityid)
+    {
+        $where = " AND `entityid` = ". $entityid . " AND `isdefault` = 1 AND templatetype = 'view'";
+        $templates = $this->getList($where);
+        if(!empty($templates)){
+            return $templates[0];
+        }else{
+            return array();
+        }
+
+    }
+    public function getFormDefault($entityid)
+    {
+        $where = " AND `entityid` = ".$entityid . " AND `isdefault` = 1 AND templatetype = 'form'";
+        $templates = $this->getList($where);
+        if(!empty($templates)){
+            return $templates[0];
+        }else{
+            return array();
+        }
+
+    }
+    public function getFormOtther($entityid)
+    {
+        $where = " AND `entityid` = ".$entityid . " AND `isdefault` = 0 AND templatetype = 'form'";
+        $templates = $this->getList($where);
+        return $templates;
     }
 }

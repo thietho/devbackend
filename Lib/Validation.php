@@ -17,7 +17,16 @@ class Validation
     {
         return (preg_match("/^[a-zA-Z0-9 ]+$/", $string)) ? true : false;
     }
-
+    public function checkSpecialCharacters($string)
+    {
+        $string = htmlspecialchars($string);
+        return (preg_match('/[\'^£$%&*()}{@#~?><>,|=_+¬-]/', $string)) ? true : false;
+    }
+    public function checkVietNam($string)
+    {
+        $string = htmlspecialchars($string);
+        return (preg_match('/^([a-zA-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+)$/i', $string)) ? true : false;
+    }
     public function checkTextOnly($string)
     {
         return (preg_match("/^[a-zA-Z0-9_* ]+$/", $string)) ? true : false;

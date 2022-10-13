@@ -44,28 +44,30 @@ class Controller
     public $route;
     public $method = '';
     public $path;
+    public $pagetitle;
+    public $breadcrumb;
     public $classname;
     protected $tree;
     public $auth;
     private $iscache;
     protected $validation;
     public $operatorchar = array(
-        'equal' => 'Equal',
-        'notequal' => 'Not equal',
-        'in' => 'In',
-        'notin' => 'Not In',
-        'lessthan' => 'Less than',
-        'lessthanequal' => 'Less than or equal',
-        'morethan' => 'More than',
-        'morethanequal' => 'More than or equal',
-        'between' => 'From - to',
-        'notbetween' => 'Not in from - to',
-        'contains' => 'Containt',
-        'notcontains' => 'Not Containt',
-        'containsin' => 'Containt',
-        'notcontainsin' => 'Not Containt',
-        'empty' => 'Empty',
-        'notempty' => 'Not Empty',
+        'equal' => 'Bằng',
+        'notequal' => 'Khác',
+        'in' => 'Trong',
+        'notin' => 'Ngoài',
+        'lessthan' => 'Nhỏ hơn',
+        'lessthanequal' => 'Nhỏ hơn hoặc bằng',
+        'morethan' => 'Lớn hơn',
+        'morethanequal' => 'Lớn hơn hoặc bằng',
+        'between' => 'Từ - đến',
+        'notbetween' => 'Không trong khoản từ - dến',
+        'contains' => 'Bao gồm',
+        'notcontains' => 'Không bao gồm',
+        'containsin' => 'Bao gồm những',
+        'notcontainsin' => 'Không bao gồm những',
+        'empty' => 'Rỗng',
+        'notempty' => 'Không rổng',
     );
     public $dataoperator = array(
         'relatedto' => array('equal', 'notequal', 'in', 'notin', 'empty', 'notempty'),
@@ -75,12 +77,12 @@ class Controller
         'VARCHAR' => array('equal', 'notequal', 'contains', 'notcontains', 'empty', 'notempty'),
         'TEXT' => array('contains', 'notcontains', 'empty', 'notempty'),
         'LONGTEXT' => array('contains', 'notcontains', 'empty', 'notempty'),
-        'INT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween'),
-        'BIGINT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween'),
-        'FLOAT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween'),
-        'DOUBLE' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween'),
-        'DATE' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween', 'empty', 'notempty'),
-        'DATETIME' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal','between','notbetween', 'empty', 'notempty'),
+        'INT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween'),
+        'BIGINT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween'),
+        'FLOAT' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween'),
+        'DOUBLE' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween'),
+        'DATE' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween', 'empty', 'notempty'),
+        'DATETIME' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'between', 'notbetween', 'empty', 'notempty'),
         'TIME' => array('equal', 'notequal', 'lessthan', 'lessthanequal', 'morethan', 'morethanequal', 'empty', 'notempty'),
         'BOOLEAN' => array('equal'),
     );
@@ -106,6 +108,7 @@ class Controller
         $this->setting = $glSetting;
         $languageModel = new Entity('Core', 'Language');
         $dataLanguage = $languageModel->getList();
+
         foreach ($dataLanguage as $language) {
             $this->language[$language['code']] = $language;
         }
@@ -119,7 +122,45 @@ class Controller
             $this->path = "Page";
             $this->classname = "Home";
         }
+        $this->pagetitle = $this->setting['systemname']['textvalue'];
         $this->iscache = true;
+        $this->breadcrumb = $this->createBreadcrumb();
+    }
+
+    private function createBreadcrumb()
+    {
+        if (isset($this->auth->userInfor)) {
+            $str = '';
+            $menuid = $this->request->get('menuid');
+            if ($menuid) {
+                $menuModel = new Entity('Core', 'Menu');
+                $rootid = 0;
+                $where = " AND name = '" . $this->auth->userInfor['groupname'] . "'";
+                $menus = $menuModel->getList($where);
+                if (!empty($menus)) {
+                    $rootid = $menus[0]['id'];
+                }
+                $data = $menuModel->getTreePath($rootid, $menuid);
+
+                while (!empty($data)) {
+                    $item = array_pop($data);
+                    if (count($data) > 0) {
+                        $str .= '<li class="breadcrumb-item">' . $item['name'] . '</li>';
+                    } else {
+                        $str .= '<li class="breadcrumb-item active">' . $item['name'] . '</li>';
+                    }
+                }
+            }
+
+
+            return '<ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="' . HTTPSERVER . '">' . $this->translate('lbl_home') . '</a></li>
+                ' . $str . '
+            </ol>';
+        } else {
+            return '';
+        }
+
     }
 
     public function translate($code)
@@ -190,7 +231,7 @@ class Controller
 
     public function dataView($val, $type, $entityrelated = 0, $optionsetid = 0, $attributeid = 0)
     {
-        $val = html_entity_decode($val);
+        $val = !empty($val) ? html_entity_decode($val) : '';
         switch ($type) {
             case 'INT':
             case 'BIGINT':
@@ -229,6 +270,7 @@ class Controller
             case 'TEXT':
             case 'LONGTEXT':
                 $val = str_replace('\"', '"', $val);
+                $val = str_replace("\'", "'", $val);
                 $val = str_replace('\r\n', "<br>", $val);
                 $val = str_replace('\n', "<br>", $val);
                 break;
@@ -255,6 +297,33 @@ class Controller
 //                    }
 //                    $val = '<div>'.implode('<br>', $arr_result).'</div>';
 //                }
+                break;
+            case 'attachment':
+                if ($val != '') {
+                    if (empty($this->model->entity)) {
+                        $entityid = $this->request->get('entityid');
+                        $entity = $this->model->getEntity($entityid);
+                    } else {
+                        $entity = $this->model->entity;
+                    }
+                    $filenames = json_decode($this->string->formateJson($val));
+                    $arr_url = [];
+                    foreach ($filenames as $filename) {
+                        $url = SERVERFILE . 'upload/' . $entity['tablename'] . '/' . $this->request->get('id') . '/' . $filename;
+                        $arr_url[] = '<a href="' . $url . '" target="_blank">' . $filename . '</a>';
+                    }
+                    $val = implode(', ', $arr_url);
+                }
+                break;
+            case 'file':
+                if (empty($this->model->entity)) {
+                    $entityid = $this->request->get('entityid');
+                    $entity = $this->model->getEntity($entityid);
+                } else {
+                    $entity = $this->model->entity;
+                }
+                $url = SERVERFILE . 'upload/' . $entity['tablename'] . '/' . $this->request->get('id') . '/' . $val;
+                $val = '<a href="' . $url . '" target="_blank">' . $val . '</a>';
                 break;
             case 'code':
                 $val = '<pre>' . base64_decode($val) . '</pre>';
@@ -371,7 +440,7 @@ class Controller
      */
     public function getData($key)
     {
-        if (!empty($this[$key]))
+        if (isset($this->data[$key]))
             return $this->data[$key];
         else
             return "";
@@ -420,7 +489,7 @@ class Controller
         }
         $cache->clearClass($this->model->entity['classname']);
         $cache->newVersion();
-        return json_encode($result);
+        return json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
     public function convertData($attribute, $value)
@@ -439,6 +508,8 @@ class Controller
             $modelOptionSet = new OptionSetModel();
             $optionSet = $modelOptionSet->getItem($optionsetid);
             $optionsetvalue = json_decode($this->string->formateJson($optionSet['optionsetvalue']), true);
+        } else {
+            $optionsetvalue = json_decode($this->string->formateJson($attribute['optionsetvalue']), true);
         }
         switch ($attribute['datatype']) {
             case 'optionset':
@@ -569,10 +640,11 @@ class Controller
                 $arr = explode('_', $data[$col]);
                 $operator = $arr[0];
                 $val = $this->formateValue($type, $arr[1]);
-                $condition = $this->model->genCondition($this->model->entity['tablename'].'.'.$col, $operator, $val);
+                $condition = $this->model->genCondition($this->model->entity['tablename'] . '.' . $col, $operator, $val);
                 $where .= " AND $condition";
             }
         }
+        $where .= $this->model->genConditionByRole();
         if (empty($data['sortcol'])) {
             $where .= " ORDER BY `id` ASC";
         } else {
@@ -581,7 +653,9 @@ class Controller
         $list = $this->model->getList($where);
         $columname[] = 'ID';
         foreach ($this->model->entity['attributes'] as $attribute) {
-            $columname[] = $attribute['attributelabel'];
+            if ($this->getAttibutePermission($this->auth->userInfor['group'], $this->auth->userInfor['roleid'], $this->model->entity['id'], $attribute['id']) != 'hide') {
+                $columname[] = $attribute['attributelabel'];
+            }
         }
         foreach ($this->model->coreAttributes as $attribute) {
             $columname[] = $attribute['attributelabel'];
@@ -591,8 +665,10 @@ class Controller
             $row = array();
             $row['ID'] = $item['id'];
             foreach ($this->model->entity['attributes'] as $attribute) {
-                $value = $item[$attribute['attributename']];
-                $row[$attribute['attributename']] = $this->dataRaw($value, $attribute['datatype'], $attribute['entityrelated'], $attribute['optionsetid'], $attribute['id']);
+                if ($this->getAttibutePermission($this->auth->userInfor['group'], $this->auth->userInfor['roleid'], $this->model->entity['id'], $attribute['id']) != 'hide') {
+                    $value = $item[$attribute['attributename']];
+                    $row[$attribute['attributename']] = $this->dataRaw($value, $attribute['datatype'], $attribute['entityrelated'], $attribute['optionsetid'], $attribute['id']);
+                }
             }
             foreach ($this->model->coreAttributes as $attribute) {
                 $value = $item[$attribute['attributename']];
@@ -613,6 +689,35 @@ class Controller
             'text' => 'Export complete',
             'link' => HTTPSERVER . $filename
         ));
+    }
+
+    public function getAttibutePermission($groupid, $roleid, $entityid, $attributeid)
+    {
+        $permission = 'edit';
+        if ($groupid != 1) {
+            $groupAttributeModel = new \Lib\Entity('Core', 'GroupAttribute');
+            $where = " AND groupid = $groupid";
+            $where .= " AND entityid = " . $entityid;
+            $where .= " AND attributeid = " . $attributeid;
+            $groupAttributes = $groupAttributeModel->getList($where);
+            if (!empty($groupAttributes)) {
+                $groupAttribute = $groupAttributes[0];
+                $permission = $groupAttribute['permission'];
+                if ($permission != 'edit') {
+                    return $permission;
+                }
+            }
+            $roleAttributeModel = new \Lib\Entity('Core', 'RoleAttribute');
+            $where = " AND roleid = $roleid";
+            $where .= " AND entityid = " . $entityid;
+            $where .= " AND attributeid = " . $attributeid;
+            $roleAttributes = $roleAttributeModel->getList($where);
+            if (!empty($roleAttributes)) {
+                $roleAttribute = $roleAttributes[0];
+                $permission = $roleAttribute['permission'];
+            }
+        }
+        return $permission;
     }
 
     public function Delete()
@@ -671,13 +776,17 @@ class Controller
             $this->setData('id', $data['id']);
         }
         $formname = $this->request->get('formname');
-        if (!empty($data)) {
-            $formname = $data['formname'];
+        if (empty($formname)) {
+            $formname = $this->auth->userInfor['groupname'];
         }
         if ($formname == '') {
             $this->setView($this->path . '/' . $this->classname . '/Form.tpl');
         } else {
-            $this->setView($this->path . '/' . $this->classname . '/Form_' . $formname . '.tpl');
+            if (file_exists(VIEW . $this->path . '/' . $this->classname . '/Form_' . $formname . '.tpl')) {
+                $this->setView($this->path . '/' . $this->classname . '/Form_' . $formname . '.tpl');
+            } else {
+                $this->setView($this->path . '/' . $this->classname . '/Form.tpl');
+            }
         }
 
         return $this->render();
@@ -694,7 +803,29 @@ class Controller
 
     public function Insert()
     {
-        $this->setView($this->path . '/' . $this->classname . '/QuickForm.tpl');
+        if ($this->model->entity['notinsrertquick']) {
+            $formname = $this->request->get('formname');
+            $this->setData('id', 0);
+            $form = $this->loader->loadController(
+                $this->path,
+                $this->classname,
+                'loadForm',
+                array('id' => 0, 'formname' => $formname)
+            );
+            $this->setData('form', $form);
+            $this->setView($this->path . '/' . $this->classname . '/PageForm.tpl');
+
+            $appjs = $this->loader->loadController("Common", "Header", 'loadAppJS');
+            $this->setData('appjs', $appjs);
+            $this->header = $this->loader->loadController("Common", "Header");
+            $this->footer = $this->loader->loadController("Common", "Footer");
+            $this->setData('header', $this->header);
+            $this->setData('footer', $this->footer);
+            $this->setLayout('Layout/home.tpl');
+        } else {
+            $this->setView($this->path . '/' . $this->classname . '/QuickForm.tpl');
+        }
+
         return $this->render();
     }
 
@@ -733,9 +864,16 @@ class Controller
             $this->setData('item', $item);
         }
         $formname = $this->request->get('formname');
+        if (empty($formname)) {
+            $formname = $this->auth->userInfor['groupname'];
+        }
+
         if ($formname != '') {
-            $formname = $data['formname'];
-            $this->setView($this->path . '/' . $this->classname . "/ViewItem_$formname.tpl");
+            if (file_exists(VIEW . $this->path . '/' . $this->classname . '/ViewItem_' . $formname . '.tpl')) {
+                $this->setView($this->path . '/' . $this->classname . "/ViewItem_$formname.tpl");
+            } else {
+                $this->setView($this->path . '/' . $this->classname . '/ViewItem.tpl');
+            }
         } else {
             $this->setView($this->path . '/' . $this->classname . '/ViewItem.tpl');
         }
@@ -755,34 +893,34 @@ class Controller
             $id = $this->request->get('id');
             if ($id != '') {
                 $item = $this->model->getItem($id);
-                foreach ($item as &$val) {
-                    $val = str_replace('\"', '"', $val);
-                }
-                $list = $this->updateDataView(array($item));
-                $item = $list[0];
                 if (!empty($item)) {
+                    foreach ($item as &$val) {
+                        $val = str_replace('\"', '"', $val);
+                    }
+                    $list = $this->updateDataView(array($item));
+                    $item = $list[0];
                     $result = json_encode(array(
                         'statuscode' => 1,
                         'text' => 'Get data success',
                         'data' => $item
-                    ));
+                    ), JSON_UNESCAPED_UNICODE);
                     if ($this->iscache) {
                         $cache->create($cachefilename, $result);
                     }
                     return $result;
                 } else {
-                    return array(
+                    return json_encode(array(
                         'statuscode' => 0,
                         'text' => 'Id is not exist!',
                         'data' => array()
-                    );
+                    ));
                 }
             } else {
-                return array(
+                return json_encode(array(
                     'statuscode' => 0,
                     'text' => 'Id is empty',
                     'data' => array()
-                );
+                ));
             }
         } else {
             return $result;
@@ -802,6 +940,7 @@ class Controller
                 $where .= " AND $condition";
             }
         }
+        $where .= $this->model->genConditionByRole();
         $count = $this->model->countTotal($where);
         return json_encode(array(
             'statuscode' => 1,
@@ -835,7 +974,7 @@ class Controller
     public function index()
     {
         if ($this->path == "PageView") {
-            $content = $this->loader->loadPage($this->classname);
+            $content = $this->loader->loadPage($this->classname, '', $this->data);
             $this->setData('content', $content);
             $this->setView('PageView/View.tpl');
             $appjs = $this->loader->loadController("Common", "Header", 'loadAppJS');
@@ -870,41 +1009,69 @@ class Controller
                 } else {
                     $data = $this->request->getDataGet();
                     $where = "";
-                    $arrcol = $this->model->arr_col;
-                    foreach ($this->model->coreAttributes as $attribute) {
-                        $arrcol[$attribute['attributename']] = $attribute['datatype'];
-                    }
-                    foreach ($arrcol as $col => $type) {
-                        if (!empty($data[$col])) {
-                            $arr = explode('_', $data[$col]);
-                            $operator = $arr[0];
-                            if (isset($arr[1])) {
-                                $val = $this->formateValue($type, $arr[1]);
+                    if (isset($data['searchtype']) && $data['searchtype'] == 'form') {
+                        $keyword = $data['keyword'];
+                        if (!empty($keyword)) {
+                            $relatesearch = $this->string->stringToArray($this->model->entity['relatesearch']);
+                            if (empty($relatesearch)) {
+                                $mainattribute = $this->model->entity['mainattribute'];
+                                $where .= " AND " . $this->model->genCondition($this->model->entity['tablename'] . "." . $mainattribute['attributename'], 'contains', $keyword);
                             } else {
-                                $val = '';
+                                $arr = [];
+                                foreach ($relatesearch as $attributeid) {
+                                    $attribute = $this->string->array_Filter($this->model->entity['attributes'], 'id', $attributeid)[0];
+                                    $arr [] = $this->model->genCondition($this->model->entity['tablename'] . "." . $attribute['attributename'], 'contains', $keyword);
+                                }
+                                $where .= " AND (" . implode(' OR ', $arr) . ")";
                             }
-                            $condition = $this->model->genCondition($this->model->entity['tablename'] . '.' . $col, $operator, $val);
-                            $where .= " AND $condition";
+                        }
+                        foreach ($data['form'] as $key => $val) {
+                            if (!empty($val)) {
+                                $arr = explode('_', $key);
+                                if ($arr[2] == 'DATETIME' && ($arr[1] == 'lessthanequal' or $arr[1] == 'lessthan')) {
+                                    $val .= ' 23:59:59';
+                                }
+                                $where .= " AND " . $this->model->genCondition($this->model->entity['tablename'] . "." . $arr[0], $arr[1], $val);
+                            }
+                        }
+                    } else {
+                        $arrcol = $this->model->arr_col;
+                        foreach ($this->model->coreAttributes as $attribute) {
+                            $arrcol[$attribute['attributename']] = $attribute['datatype'];
+                        }
+                        foreach ($arrcol as $col => $type) {
+                            if (!empty($data[$col])) {
+                                $arr = explode('_', $data[$col]);
+                                $operator = $arr[0];
+                                if (isset($arr[1])) {
+                                    $val = $this->formateValue($type, $arr[1]);
+                                } else {
+                                    $val = '';
+                                }
+                                $condition = $this->model->genCondition($this->model->entity['tablename'] . '.' . $col, $operator, $val);
+                                $where .= " AND $condition";
+                            }
                         }
                     }
-                    $this->pagination->total = $this->model->countTotal($where);
 
-                    if ($this->request->get('page') != '' && $this->validation->checkNumberOnly($this->request->get('page'))) {
-                        $this->pagination->page = intval($this->request->get('page'));
-                    }
 
-                    $this->pagination->url = $this->request->getQueryString();
-                    $from = ($this->pagination->page - 1) * $this->pagination->limit;
-                    $to = $this->pagination->limit;
-                    $this->setData('pagination', $this->pagination->render());
+                    $where .= $this->model->genConditionByRole();
+
                     if (!empty($data['sortcol'])) {
                         $where .= " ORDER BY " . $data['sortcol'] . " " . $data['sorttype'];
                     }
 
                     if ($this->model->entity['entitytype'] != 'Core') {
-                        $userViews = $this->getUserView();
                         $viewid = empty($this->request->get('viewid')) ? 0 : $this->request->get('viewid');
+                        $templateid = empty($this->request->get('templateid')) ? 0 : $this->request->get('templateid');
+
+                        $userViews = $this->getUserView();
                         $viewtemplate = json_decode($userViews[$viewid]['viewcontent'], true);
+
+                        if ($templateid) {
+                            $template = $this->template->getItem($templateid);
+                            $viewtemplate = json_decode($template['templatecontent'], true);
+                        }
                         if (empty($data['sortcol'])) {
                             if (isset($viewtemplate['sort']) && !empty($viewtemplate['sort'])) {
                                 $arr_sort = array();
@@ -921,6 +1088,16 @@ class Controller
                                 $where .= "ORDER BY " . implode(',', $arr_sort);
                             }
                         }
+                        $this->pagination->total = $this->model->countTotal($where, $viewtemplate);
+                        if ($this->request->get('page') != '' && $this->validation->checkNumberOnly($this->request->get('page'))) {
+                            $this->pagination->page = intval($this->request->get('page'));
+                        }
+                        $this->pagination->url = $this->request->getQueryString();
+                        $from = ($this->pagination->page - 1) * $this->pagination->limit;
+                        if ($from > $this->pagination->total) {
+                            $from = 0;
+                        }
+                        $to = $this->pagination->limit;
                         $list = $this->model->getList($where, $from, $to, $viewtemplate);
                         $this->setData('viewid', $viewid);
                         $this->setData('userViews', $userViews);
@@ -945,6 +1122,16 @@ class Controller
                                 $where .= "ORDER BY " . implode(',', $arr_sort);
                             }
                         }
+                        $this->pagination->total = $this->model->countTotal($where, $viewtemplate);
+                        if ($this->request->get('page') != '' && $this->validation->checkNumberOnly($this->request->get('page'))) {
+                            $this->pagination->page = intval($this->request->get('page'));
+                        }
+                        $this->pagination->url = $this->request->getQueryString();
+                        $from = ($this->pagination->page - 1) * $this->pagination->limit;
+                        if ($from > $this->pagination->total) {
+                            $from = 0;
+                        }
+                        $to = $this->pagination->limit;
                         $list = $this->model->getList($where, $from, $to, $viewtemplate);
                     }
 
@@ -962,6 +1149,7 @@ class Controller
                     );
                 }
 
+                $this->setData('pagination', $this->pagination->render());
                 $this->setData('view', $view);
 
                 $this->setView($this->path . '/' . $this->classname . '/PageList.tpl');
@@ -1020,6 +1208,7 @@ class Controller
 
                 }
             }
+            $where .= $this->model->genConditionByRole();
             if ($this->request->get('paging') == 'true') {
                 $limit = $this->request->get('limit');
                 if ($limit) {
@@ -1031,6 +1220,9 @@ class Controller
                 }
                 $this->pagination->url = $this->request->getQueryString();
                 $from = ($this->pagination->page - 1) * $this->pagination->limit;
+                if ($from > $this->pagination->total) {
+                    $from = 0;
+                }
                 $to = $this->pagination->limit;
 
                 if (empty($data['sortcol'])) {
@@ -1082,17 +1274,21 @@ class Controller
         }
     }
 
-    private function updateDataView($list)
+    protected function updateDataView($list, $model = null)
     {
         foreach ($list as &$row) {
             foreach ($row as $col => $val) {
-                if (isset($this->model->arr_col[$col])) {
-                    $datatype = $this->model->arr_col[$col];
+                if ($model == null) {
+                    $model = $this->model;
+                }
+                if (isset($model->arr_col[$col])) {
+                    $datatype = $model->arr_col[$col];
                     //echo "$col - $datatype - $val".PHP_EOL;
+                    $row[$col] = $this->string->formateJson($row[$col]);
                     switch ($datatype) {
                         case 'relatedto':
-                            if (!isset($this->model->corecol[$col])) {
-                                $attribute = $this->model->getAttributeByName($col);
+                            if (!isset($model->corecol[$col])) {
+                                $attribute = $model->getAttributeByName($col);
                                 $relatevalue = $this->getRelatedValue($val, $attribute['entityrelated']);
                             } else {
                                 $relatevalue = $this->getRelatedValue($val, 1);
@@ -1102,8 +1298,8 @@ class Controller
                         case 'relatedtomulti':
                             $arr = $this->string->stringToArray($val);
                             $entityrelatedid = 1;
-                            if (!isset($this->model->corecol[$col])) {
-                                $entityrelated = $this->model->getAttributeByName($col);
+                            if (!isset($model->corecol[$col])) {
+                                $entityrelated = $model->getAttributeByName($col);
                                 $entityrelatedid = $entityrelated['entityrelated'];
                             }
                             $relatevalue = array();
@@ -1114,10 +1310,34 @@ class Controller
                             $row[$col . '_text'] = strip_tags(implode(',', $relatevalue));
                             break;
                         case 'optionset':
-                            $attribute = $this->model->getAttributeByName($col);
+                            $attribute = $model->getAttributeByName($col);
                             $optionSetValue = $this->getOptionSetValue($val, $attribute['optionsetid'], $attribute['id']);
 
                             $row[$col . '_text'] = $optionSetValue;
+                            break;
+                        case 'optionsetmulti':
+                            $attribute = $model->getAttributeByName($col);
+                            $arr = $this->string->stringToArray($val);
+                            $arrOptionSetValue = array();
+                            foreach ($arr as $item) {
+                                $arrOptionSetValue [] = $this->getOptionSetValue($item, $attribute['optionsetid'], $attribute['id']);
+                            }
+                            $row[$col . '_text'] = implode(',', $arrOptionSetValue);
+                            break;
+                        case 'image':
+                            if (!empty($this->model->entity)) {
+                                $url = IMAGESERVER . 'root/upload/' . $this->model->entity['tablename'] . '/' . $row['id'] . '/' . $val;
+                                $row[$col . '_url'] = $url;
+                            }
+                            break;
+                        case 'TEXT':
+                        case 'LONGTEXT':
+                            $val = $row[$col];
+                            $val = str_replace('\"', '"', $val);
+                            $val = str_replace("\'", "'", $val);
+                            $val = str_replace('\r\n', "<br>", $val);
+                            $val = str_replace('\n', "<br>", $val);
+                            $row[$col] = $val;
                             break;
                     }
                 }
@@ -1220,5 +1440,138 @@ class Controller
             );
         }
         return $result;
+    }
+
+    public function Search()
+    {
+        $term = urlencode($this->request->get('term'));
+        $where = '';
+        $searchcol = array();
+        $relatesearch = json_decode($this->string->formateJson($this->model->entity['relatesearch']), true);
+
+        if (empty($relatesearch)) {
+            $maincol = $this->model->entity['maincol'];
+            $attribute = $this->model->getAttributeById($maincol);
+            $searchcol [] = $attribute['attributename'];
+        } else {
+            foreach ($relatesearch as $attributeid) {
+                $attribute = $this->model->getAttributeById($attributeid);
+                $searchcol [] = $attribute['attributename'];
+            }
+        }
+        if (!empty($term)) {
+            $arr = array();
+            foreach ($searchcol as $col) {
+                $arr [] = " `$col` like '%$term%'";
+            }
+            //echo implode('OR',$arr);
+            $where = " AND (" . implode(' OR ', $arr) . ")";
+        }
+        $where .= $this->model->genConditionByRole();
+        $items = array();
+        if ($this->model->entity['structure'] == 'tree') {
+            $data = array();
+            $this->model->travel(0, $data);
+            $data = $this->updateDataView($data);
+            foreach ($data as $item) {
+                $arrtext = array();
+                foreach ($searchcol as $col) {
+                    $arrtext [] = isset($item[$col . '_text']) ? $item[$col . '_text'] : $item[$col];
+                }
+                $text = implode(' - ', $arrtext);
+                if (!empty($term)) {
+                    $str = strtolower($this->string->vn_to_str($text));
+                    $term = strtolower($term);
+                    if (strpos($str, $term) !== false) {
+                        $items[] = array(
+                            'id' => $item['id'],
+                            'text' => $this->string->setLoopStr('---', $item['level']) . $text
+                        );
+                    }
+                } else {
+                    $items[] = array(
+                        'id' => $item['id'],
+                        'text' => $this->string->setLoopStr('---', $item['level']) . $text
+                    );
+                }
+
+
+            }
+
+        } else {
+            if ($this->model->entity['classname'] == 'User' && $this->auth->userInfor['group'] != 1) {
+                $allow = $this->auth->userInfor['allow'];
+                switch ($allow) {
+                    case 'minechild':
+                        $listuserid [] = $this->auth->userInfor['id'];
+                        $userStructureModel = new \Lib\Entity('Core', 'UserStructure');
+                        $w = " AND userid = " . $this->auth->userInfor['id'];
+                        $userStructures = $userStructureModel->getList($w);
+                        if (!empty($userStructures)) {
+                            $id = $userStructures[0]['id'];
+                            $userStructures = array();
+                            $userStructureModel->travel($id, $userStructures);
+                            foreach ($userStructures as $userStructure) {
+                                $listuserid [] = $userStructure['userid'];
+                            }
+                        }
+                        $where .= " AND id IN (" . implode(',', $listuserid) . ")";
+                        break;
+                    case 'onlyme':
+                        $where .= " AND id = " . $this->auth->userInfor['id'];
+                        break;
+                }
+            }
+            $data = $this->model->getList($where);
+            $data = $this->updateDataView($data);
+            $items = array();
+            foreach ($data as $item) {
+                $arrtext = array();
+                foreach ($searchcol as $col) {
+                    $arrtext [] = isset($item[$col . '_text']) ? $item[$col . '_text'] : $item[$col];
+                }
+                $items[] = array(
+                    'id' => $item['id'],
+                    'text' => implode(' - ', $arrtext)
+                );
+            }
+        }
+
+        $this->response->jsonOutput($items);
+    }
+
+    public function ShowSearchItem()
+    {
+        $searchcol = [];
+        $relatesearch = json_decode($this->string->formateJson($this->model->entity['relatesearch']), true);
+
+        if (empty($relatesearch)) {
+            $maincol = $this->model->entity['maincol'];
+            $attribute = $this->model->getAttributeById($maincol);
+            $searchcol [] = $attribute['attributename'];
+        } else {
+
+            foreach ($relatesearch as $attributeid) {
+                $attribute = $this->model->getAttributeById($attributeid);
+                $searchcol [] = $attribute['attributename'];
+            }
+        }
+
+        $id = $this->request->get('id');
+        $item = $this->model->getItem($id);
+        foreach ($item as &$val) {
+            $val = str_replace('\"', '"', $val);
+        }
+
+        $list = $this->updateDataView(array($item));
+        $item = $list[0];
+        $arrtext = array();
+        foreach ($searchcol as $col) {
+            $arrtext [] = isset($item[$col . '_text']) ? $item[$col . '_text'] : $item[$col];
+        }
+        $this->response->jsonOutput([
+            'statuscode' => 1,
+            'text' => implode(' - ', $arrtext)
+        ]);
     }
 }

@@ -62,7 +62,7 @@ final class Date
         return date( 'Y-m-d' ,$this->timeToInt($date));
     }
     public function intToTime($int){
-        return date('Y-m-d H:i:s',$int);
+        return date('Y-m-d H:i:s',$int + $this->balanc_vntime * 3600);
     }
     function getToday()
     {
@@ -183,7 +183,7 @@ final class Date
 
     function isDateNull($date)
     {
-        if ($date == "0000-00-00 00:00:00") {
+        if ($date == "0000-00-00 00:00:00" || $date == "0000-00-00" || $date == "" || $date == null) {
             return true;
         } else {
             return false;

@@ -13,7 +13,9 @@ class Request
     {
         if(!empty($_GET)){
             foreach ($_GET as &$value){
-                $value = htmlentities($value,ENT_IGNORE,'cp866');
+                if(is_string($value)){
+                    $value = htmlentities($value,ENT_IGNORE,'cp866');
+                }
             }
         }
         if (!empty($_GET)) {
@@ -24,7 +26,7 @@ class Request
         }else{
             $this->dataPost = json_decode(file_get_contents('php://input'), true);
         }
-        $this->method = $_SERVER['REQUEST_METHOD'];
+        $this->method = isset($_SERVER['REQUEST_METHOD'])?$_SERVER['REQUEST_METHOD']:'job';
 
     }
 
@@ -57,6 +59,11 @@ class Request
         if (!empty($headers)) {
             if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
                 return $matches[1];
+            }
+        }else{
+            $requestHeaders = apache_request_headers();
+            if(isset($requestHeaders['Access-Token'])){
+                return $requestHeaders['Access-Token'];
             }
         }
         return null;
