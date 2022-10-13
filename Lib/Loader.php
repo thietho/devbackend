@@ -181,7 +181,7 @@ class Loader
         return $resources;
     }
 
-    public function getApi($apiname,$data = [],$token = ''){
+    public function getApi($apiname,$data = [],$token = '',$debug = false){
         $url = HTTPSERVER.$apiname.'.api?'.http_build_query($data);
         $curl = curl_init();
         curl_setopt_array($curl, array(
@@ -199,13 +199,16 @@ class Loader
             )
         ));
         $response = curl_exec($curl);
+        if($debug){
+            echo $url;
+            var_dump($response);
+        }
         curl_close($curl);
         return $response;
     }
-    public function postApi($apiname,$data = []){
+    public function postApi($apiname,$data = [],$token = '',$debug = false){
 
         $url = HTTPSERVER.$apiname.'.api?';
-        $token = $this->auth->genToken($this->auth->userInfor['id']);
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => $url,
@@ -223,6 +226,9 @@ class Loader
             )
         ));
         $response = curl_exec($curl);
+        if($debug){
+            echo $response;
+        }
         curl_close($curl);
         return $response;
     }
